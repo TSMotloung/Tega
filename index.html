@@ -7466,8 +7466,7 @@ document.querySelectorAll('.close_offer').forEach(element => {
 
 </div>
 
-	  <!-- Widget Configuration -->
-  <script>
+	  <script>
     window.ChatWidgetConfig = {
       webhook: {
         url: 'https://primary-production-9a3b.up.railway.app/webhook/dcfb08e7-0dea-4bd2-b6d1-734a98807de4/chat',
@@ -7482,7 +7481,7 @@ document.querySelectorAll('.close_offer').forEach(element => {
       style: {
         primaryColor: '#10b981',
         secondaryColor: '#059669',
-        position: 'left',
+        position: 'right',
         backgroundColor: '#ffffff',
         fontColor: '#1f2937',
       },
@@ -7494,12 +7493,8 @@ document.querySelectorAll('.close_offer').forEach(element => {
       ]
     };
   </script>
-
   <script src="https://cdn.jsdelivr.net/gh/funtastic418/chat-widget@main/chat-widget.js"></script>
-
-  <!-- Targeted styling for branding only -->
   <style>
-    /* Only target very specific branding elements, not the entire widget */
     .chat-widget small:contains("powered"),
     .chat-widget small:contains("n8n"),
     .chat-widget .attribution,
@@ -7511,23 +7506,15 @@ document.querySelectorAll('.close_offer').forEach(element => {
       pointer-events: none !important;
     }
   </style>
-
   <script>
-    // Very targeted function that only affects branding text
     function hideBrandingOnly() {
-      // Only look for elements that specifically contain "powered by" text
       const allElements = document.querySelectorAll('*');
-
       allElements.forEach(el => {
-        // Only process if it's a text-only element (leaf node with text)
         if (el.children.length === 0 && el.textContent) {
           const text = el.textContent.trim();
-
-          // Only modify if it's EXACTLY or PRIMARILY branding text
           if (text.toLowerCase() === 'powered by n8n' || 
               text.toLowerCase() === 'powered by' ||
               (text.toLowerCase().includes('powered by') && text.length < 30)) {
-
             el.style.color = 'white';
             el.style.backgroundColor = 'white';
             el.style.fontSize = '0.1px';
@@ -7538,23 +7525,65 @@ document.querySelectorAll('.close_offer').forEach(element => {
       });
     }
 
-    // Wait longer for widget to fully initialize before touching anything
+    function fixLinksToSameTab() {
+      const chatWidget = document.querySelector('.chat-widget') || document.body;
+      const links = chatWidget.querySelectorAll('a');
+      
+      links.forEach(link => {
+        if (link.getAttribute('target') === '_blank') {
+          link.removeAttribute('target');
+        }
+        
+        link.addEventListener('click', function(e) {
+          if (this.href && (this.href.startsWith('http://') || this.href.startsWith('https://'))) {
+            e.preventDefault();
+            window.location.href = this.href;
+          }
+        }, true);
+      });
+    }
+
     setTimeout(() => {
       hideBrandingOnly();
-
-      // Check less frequently and only for a limited time
+      fixLinksToSameTab();
+      
       let checkCount = 0;
       const brandingCheck = setInterval(() => {
         hideBrandingOnly();
+        fixLinksToSameTab();
         checkCount++;
-
-        // Stop checking after 30 seconds to avoid interfering long-term
         if (checkCount > 15) {
           clearInterval(brandingCheck);
         }
       }, 2000);
-    }, 5000); // Wait 5 seconds before doing anything
+    }, 5000);
+
+    const observer = new MutationObserver(function(mutations) {
+      let shouldCheckLinks = false;
+      mutations.forEach(function(mutation) {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          mutation.addedNodes.forEach(node => {
+            if (node.nodeType === 1) {
+              if (node.tagName === 'A' || node.querySelectorAll('a').length > 0) {
+                shouldCheckLinks = true;
+              }
+            }
+          });
+        }
+      });
+      
+      if (shouldCheckLinks) {
+        setTimeout(fixLinksToSameTab, 100);
+      }
+    });
+
+    setTimeout(() => {
+      const targetNode = document.querySelector('.chat-widget') || document.body;
+      observer.observe(targetNode, {
+        childList: true,
+        subtree: true
+      });
+    }, 6000);
   </script>
-  
 </body>
 </html>
